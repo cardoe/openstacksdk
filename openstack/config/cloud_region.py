@@ -76,6 +76,39 @@ SCOPE_KEYS = {
     'system_scope',
 }
 
+# Named scope families for the top-level ``scope`` block in clouds.yaml. The
+# keys are the same prefixed names used in an ``auth`` block; the ``system``
+# key is an alias for ``system_scope``. A caller selects one family at a time
+# (see ``CloudRegion.get_scopes`` / ``Connection.scoped``).
+SCOPE_FAMILIES = {
+    'project': (
+        'project_id',
+        'project_name',
+        'project_domain_id',
+        'project_domain_name',
+    ),
+    'domain': (
+        'domain_id',
+        'domain_name',
+    ),
+    'system': ('system',),
+}
+
+# Every scope key that may appear in an ``auth`` block, so that a resolved
+# ``scope`` family can replace any scope left over there without leaving a
+# conflicting target behind.
+_AUTH_SCOPE_KEYS = frozenset(
+    {
+        'project_id',
+        'project_name',
+        'project_domain_id',
+        'project_domain_name',
+        'domain_id',
+        'domain_name',
+        'system_scope',
+    }
+)
+
 # Sentinel for nonexistence
 _ENOENT = object()
 
@@ -854,6 +887,25 @@ class CloudRegion:
     def get_auth(self) -> plugin.BaseAuthPlugin | None:
         """Return a keystoneauth plugin from the auth credentials."""
         return self._auth
+
+    def get_scopes(self) -> list[str]:
+        """Return the scope families defined by this cloud's ``scope`` block.
+
+        A cloud may declare more than one authorization scope (for example
+        both ``project`` and ``system``) in a top-level ``scope`` block,
+        sharing a single credential. This returns the names of the families
+        that are actually populated, in a stable order. An empty list means
+        the cloud has no ``scope`` block and uses whatever scope is in its
+        ``auth``.
+        """
+        scope_config = self.config.get('scope')
+        if not scope_config:
+            return []
+        return [
+            family
+            for family in SCOPE_FAMILIES
+            if any(scope_config.get(key) for key in SCOPE_FAMILIES[family])
+        ]
 
     def skip_auth_cache(self) -> bool:
         return not keyring or not self._auth or not self._cache_auth

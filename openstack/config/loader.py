@@ -1456,11 +1456,83 @@ class OpenStackConfig:
 
         return config
 
+    def _resolve_scope(
+        self, config: dict[str, Any], scope: str | None
+    ) -> dict[str, Any]:
+        """Fold the selected ``scope`` family into the auth parameters.
+
+        A cloud may carry a top-level ``scope`` block describing one or more
+        scope families (``project``, ``system``, ``domain``) using the same
+        prefixed key names an ``auth`` block would use. Exactly one family is
+        applied to a given plugin: the one named by ``scope``, or the default
+        (``project`` if defined, else the sole family present). The selected
+        family replaces any scope keys already in ``auth`` so the plugin is
+        never handed two conflicting targets.
+        """
+        scope_config = config.get('scope')
+        if not scope_config:
+            if scope is not None:
+                raise exceptions.ConfigException(
+                    f"A scope '{scope}' was requested but the cloud does not "
+                    f"define a 'scope' block."
+                )
+            return config
+
+        available = [
+            family
+            for family in cloud_region.SCOPE_FAMILIES
+            if any(
+                scope_config.get(key)
+                for key in cloud_region.SCOPE_FAMILIES[family]
+            )
+        ]
+
+        if scope is None:
+            # Default to project scope when present, else the sole family.
+            if 'project' in available:
+                scope = 'project'
+            elif len(available) == 1:
+                scope = available[0]
+            elif not available:
+                return config
+            else:
+                raise exceptions.ConfigException(
+                    f"The cloud defines multiple scopes "
+                    f"({', '.join(available)}) but none is 'project'; "
+                    f"specify which scope to use."
+                )
+        elif scope not in cloud_region.SCOPE_FAMILIES:
+            valid = ', '.join(cloud_region.SCOPE_FAMILIES)
+            raise exceptions.ConfigException(
+                f"Unknown scope '{scope}'; valid scopes are: {valid}."
+            )
+        elif scope not in available:
+            raise exceptions.ConfigException(
+                f"The cloud does not define a '{scope}' scope."
+            )
+
+        auth = config.setdefault('auth', {})
+        # Drop any scope target already present so the resolved family wins
+        # cleanly and keystoneauth is not handed two scopes at once.
+        for key in cloud_region._AUTH_SCOPE_KEYS:
+            auth.pop(key, None)
+
+        for key in cloud_region.SCOPE_FAMILIES[scope]:
+            value = scope_config.get(key)
+            if value is None:
+                continue
+            # ``system`` in a scope block is an alias for ``system_scope``.
+            auth_key = 'system_scope' if key == 'system' else key
+            auth[auth_key] = value
+
+        return config
+
     def get_one(
         self,
         cloud: str | None = None,
         validate: bool = True,
         argparse: argparse_mod.Namespace | None = None,
+        scope_name: str | None = None,
         **kwargs: Any,
     ) -> cloud_region.CloudRegion:
         """Retrieve a single CloudRegion and merge additional options
@@ -1474,6 +1546,11 @@ class OpenStackConfig:
             An argparse Namespace object; allows direct passing in of
             argparse options to be added to the cloud config. Values
             of None and '' will be removed.
+        :param string scope_name:
+            Name of the scope family (``project``, ``system`` or ``domain``)
+            to select from the cloud's top-level ``scope`` block, if any. When
+            ``None`` the default family is used (``project`` if defined, else
+            the sole family present).
         :param region_name: Name of the region of the cloud.
         :param kwargs: Additional configuration options
 
@@ -1520,6 +1597,10 @@ class OpenStackConfig:
         #                plugin is loaded in order to maintain backward-
         #                compatible behaviour
         config = self.auth_config_hook(config)
+
+        # Resolve the selected scope family from a top-level ``scope`` block
+        # (if present) into the auth parameters the plugin is built from.
+        config = self._resolve_scope(config, scope_name)
 
         if validate:
             loader = self._get_auth_loader(config)

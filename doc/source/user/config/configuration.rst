@@ -241,6 +241,47 @@ individual requirements to the specified parameters.
         project_domain_name: pdn
 
 
+Scope Settings
+--------------
+
+Normally the target a token is scoped to (a project, a domain or the system)
+is set with the ``project_*``, ``domain_*`` or ``system_scope`` keys inside the
+``auth`` dict, and a cloud has exactly one scope. A cloud may instead declare
+its scope in a top-level ``scope`` block, which keeps the authorization target
+separate from the credential and lets a single cloud describe more than one
+scope at once. The block is flat and uses the same prefixed key names an
+``auth`` block would, with ``system`` as the alias for ``system_scope``:
+
+.. code-block:: yaml
+
+  clouds:
+    mycloud:
+      auth:
+        auth_url: https://identity.cloud.com
+        username: user
+        password: XXXXXXXXX
+        user_domain_name: udn
+      scope:
+        project_name: project
+        project_domain_name: pdn
+        system: all
+
+The ``project_*`` keys form the ``project`` scope, ``system`` the ``system``
+scope, and the ``domain_*`` keys the ``domain`` scope. When more than one is
+present the credential is authenticated once and rescoped to the selected
+target. A plain :func:`~openstack.connect` uses the default scope (``project``
+if defined, otherwise the sole scope present); a different scope is selected
+per connection:
+
+.. code-block:: python
+
+  conn = openstack.connect(cloud='mycloud')  # project scope
+  admin = conn.connect_as_system()           # system scope, same credential
+
+See :meth:`~openstack.connection.Connection.scoped` and
+:meth:`~openstack.config.cloud_region.CloudRegion.get_scopes`.
+
+
 API Settings
 ------------
 

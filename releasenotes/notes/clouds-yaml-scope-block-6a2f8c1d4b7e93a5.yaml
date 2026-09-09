@@ -1,0 +1,34 @@
+---
+features:
+  - |
+    A cloud in ``clouds.yaml`` may now carry a top-level ``scope`` block
+    alongside ``auth``, describing one or more authorization scopes that share
+    the cloud's single credential. The block is flat and uses the same prefixed
+    key names as an ``auth`` block (``project_id``, ``project_name``,
+    ``project_domain_id``, ``project_domain_name``, ``system``, ``domain_id``,
+    ``domain_name``); the prefixes namespace the ``project``, ``system`` and
+    ``domain`` scope families, so a single block can describe more than one
+    scope at once. For example::
+
+        clouds:
+          mycloud:
+            auth:
+              auth_url: https://keystone.example.com/v3
+              username: alice
+              password: secret
+              user_domain_name: Default
+            scope:
+              project_name: demo
+              project_domain_name: Default
+              system: all
+
+    ``openstack.config`` selects one family per plugin: the one requested via
+    the new ``scope_name`` argument to ``get_one``, or the default (``project``
+    if defined, else the sole family present).
+  - |
+    ``Connection`` gained ``scoped(scope)`` and the convenience
+    ``connect_as_system()`` for switching to another scope declared in a
+    cloud's ``scope`` block. They return a sibling ``Connection`` that shares
+    the original credential, so a project-scoped and a system-scoped
+    connection can be held at once without authenticating twice.
+    ``CloudRegion.get_scopes`` reports which scope families a cloud defines.

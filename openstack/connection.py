@@ -688,6 +688,64 @@ class Connection(
             auth['project_name'] = project
         return self.connect_as(**auth)
 
+    def scoped(self, scope: str) -> Self:
+        """Make a new Connection using a different scope of the same cloud.
+
+        When a cloud declares more than one authorization scope in a top-level
+        ``scope`` block (for example both ``project`` and ``system``), this
+        returns a sibling Connection that uses the credential of this cloud but
+        is scoped to the named family. The two Connections share the same
+        credential, so a caller can hold a project-scoped and a system-scoped
+        Connection at once without authenticating twice:
+
+        .. code-block:: python
+
+            conn = openstack.connect(cloud='example')  # project scope
+            servers = conn.compute.servers()
+            admin = conn.scoped('system')  # system scope
+            services = admin.identity.services()
+
+        :param scope: Name of the scope family to use (``project``, ``system``
+            or ``domain``). Must be one of the families the cloud defines; see
+            :meth:`~openstack.config.cloud_region.CloudRegion.get_scopes`.
+        :raises: :class:`~openstack.exceptions.ConfigException` if the cloud
+            does not define the requested scope.
+        """
+        if self.config._openstack_config:
+            config = self.config._openstack_config
+        else:
+            config = openstack.config.OpenStackConfig(
+                app_name=self.config._app_name,
+                app_version=self.config._app_version,
+                load_yaml_config=False,
+            )
+        params = copy.deepcopy(self.config.config)
+        # Remove profile from current cloud so that overriding works
+        params.pop('profile', None)
+
+        cloud_region = config.get_one(scope_name=scope, **params)
+        # Attach the discovery cache from the old session so we won't
+        # double discover.
+        cloud_region._discovery_cache = self.session._discovery_cache
+        # Override the cloud name so that logging/location work right
+        cloud_region._name = self.name
+        cloud_region.config['profile'] = self.name
+        return self.__class__(config=cloud_region)
+
+    def connect_as_system(self) -> Self:
+        """Make a new Connection scoped to the system.
+
+        Convenience wrapper around :meth:`scoped` for the common case of
+        switching to the ``system`` scope declared in the cloud's ``scope``
+        block.
+
+        .. code-block:: python
+
+            cloud = openstack.connect(cloud='example')
+            admin = cloud.connect_as_system()
+        """
+        return self.scoped('system')
+
     def endpoint_for(
         self,
         service_type: str,

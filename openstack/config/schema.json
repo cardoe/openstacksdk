@@ -13,6 +13,9 @@
         "auth": {
           "$ref": "#/$defs/auth"
         },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
         "auth_type": {
           "name": "Auth Type",
           "description": "Name of authentication plugin to be used",
@@ -316,6 +319,24 @@
         }
       },
       "additionalProperties": true
+    },
+    "scope": {
+      "name": "Scope",
+      "description": "Authorization scope(s) this cloud can request tokens for, kept separate from the authentication credential in 'auth'. The keys are the same prefixed scope names used in 'auth' (project_*, system, domain_*); the prefixes namespace the scope targets, so a single flat block may describe the project, system and domain scopes at once and a caller selects one at a time. When 'scope' is present the credential in 'auth' is authenticated once and rescoped to the selected target on demand.",
+      "type": "object",
+      "properties": {
+        "project_id": { "type": "string" },
+        "project_name": { "type": "string" },
+        "project_domain_id": { "type": "string" },
+        "project_domain_name": { "type": "string" },
+        "system": {
+          "description": "System scope to request, e.g. 'all'. Equivalent to 'system_scope' in an auth block.",
+          "type": "string"
+        },
+        "domain_id": { "type": "string" },
+        "domain_name": { "type": "string" }
+      },
+      "additionalProperties": false
     },
     "network": {
       "name": "Network",
