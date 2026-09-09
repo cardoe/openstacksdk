@@ -1554,3 +1554,61 @@ class TestNodeFirmware(base.TestCase):
             microversion='1.86',
             retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
         )
+
+
+@mock.patch.object(node.Node, 'fetch', lambda self, session: self)
+@mock.patch.object(exceptions, 'raise_from_response', mock.Mock())
+class TestNodeBmcSettings(base.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.node = node.Node(**FAKE)
+        self.session = mock.Mock(
+            spec=adapter.Adapter,
+            default_microversion='1.116',
+        )
+
+    def test_list_bmc_settings(self):
+        settings = {
+            "bmc": [
+                {"name": "IPMI1_Enable", "value": "Disabled"},
+                {"name": "SSH_Enable", "value": "Enabled"},
+            ]
+        }
+        self.session.get.return_value.json.return_value = settings
+
+        res = self.node.list_bmc_settings(self.session)
+        self.assertEqual(settings["bmc"], res)
+
+        self.session.get.assert_called_once_with(
+            f'nodes/{self.node.id}/bmc',
+            headers=mock.ANY,
+            microversion='1.116',
+            retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
+        )
+
+    def test_list_bmc_settings_detail(self):
+        self.session.get.return_value.json.return_value = {"bmc": []}
+
+        self.node.list_bmc_settings(self.session, detail=True)
+
+        self.session.get.assert_called_once_with(
+            f'nodes/{self.node.id}/bmc?detail=True',
+            headers=mock.ANY,
+            microversion='1.116',
+            retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
+        )
+
+    def test_get_bmc_setting(self):
+        setting = {"IPMI1_Enable": {"name": "IPMI1_Enable",
+                                    "value": "Disabled"}}
+        self.session.get.return_value.json.return_value = setting
+
+        res = self.node.get_bmc_setting(self.session, 'IPMI1_Enable')
+        self.assertEqual(setting["IPMI1_Enable"], res)
+
+        self.session.get.assert_called_once_with(
+            f'nodes/{self.node.id}/bmc/IPMI1_Enable',
+            headers=mock.ANY,
+            microversion='1.116',
+            retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
+        )

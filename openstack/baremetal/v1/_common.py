@@ -110,6 +110,9 @@ for provisioning"""
 RUNBOOK_TRAITS_VERSION = '1.112'
 """API version in which runbooks gained traits and a description."""
 
+BMC_SETTINGS_VERSION = '1.116'
+"""API version in which the BMC settings of a node can be accessed."""
+
 
 class Resource(resource.Resource):
     """A subclass for resources that use the path to request a detailed view.

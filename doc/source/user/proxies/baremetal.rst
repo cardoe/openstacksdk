@@ -32,6 +32,12 @@ Node Trait Operations
   :noindex:
   :members: add_node_trait, remove_node_trait, set_node_traits
 
+BMC Settings Operations
+^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: openstack.baremetal.v1._proxy.Proxy
+  :noindex:
+  :members: list_node_bmc_settings, get_node_bmc_setting
+
 Port Operations
 ^^^^^^^^^^^^^^^
 .. autoclass:: openstack.baremetal.v1._proxy.Proxy

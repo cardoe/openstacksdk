@@ -1018,6 +1018,35 @@ class Proxy(proxy.Proxy):
         res = self._get_resource(_node.Node, node)
         return res.list_firmware(self)
 
+    # ========== BMC settings ==========
+
+    def list_node_bmc_settings(
+        self, node: str | _node.Node, detail: bool = False
+    ) -> list[dict[str, object]]:
+        """Lists BMC (management controller) settings for a node.
+
+        :param node: The value can be the name or ID of a node or a
+            :class:`~openstack.baremetal.v1.node.Node` instance.
+        :param detail: Whether to return the additional attribute-registry
+            fields for each setting.
+        :returns: A list of the node's BMC settings.
+        """
+        res = self._get_resource(_node.Node, node)
+        return res.list_bmc_settings(self, detail=detail)
+
+    def get_node_bmc_setting(
+        self, node: str | _node.Node, setting_name: str
+    ) -> dict[str, object]:
+        """Get a specific BMC setting for a node.
+
+        :param node: The value can be the name or ID of a node or a
+            :class:`~openstack.baremetal.v1.node.Node` instance.
+        :param setting_name: The name of the BMC setting to retrieve.
+        :returns: The BMC setting as a dict.
+        """
+        res = self._get_resource(_node.Node, node)
+        return res.get_bmc_setting(self, setting_name)
+
     # ========== Ports ==========
 
     def ports(

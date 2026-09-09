@@ -1648,6 +1648,75 @@ class Node(_common.Resource):
 
         return cast(list[dict[str, object]], response.json())
 
+    def list_bmc_settings(
+        self, session: adapter.Adapter, detail: bool = False
+    ) -> list[dict[str, object]]:
+        """List BMC (management controller) settings for the node.
+
+        :param session: The session to use for making this request.
+        :param detail: Whether to return the additional attribute-registry
+            fields for each setting.
+        :returns: A list of the node's BMC settings.
+        """
+        session = self._get_session(session)
+        version = self._assert_microversion_for(
+            session,
+            _common.BMC_SETTINGS_VERSION,
+            error_message="Cannot use the node BMC settings API",
+        )
+
+        request = self._prepare_request(requires_id=True)
+        request.url = utils.urljoin(request.url, 'bmc')
+        if detail:
+            request.url = f'{request.url}?detail=True'
+
+        response = session.get(
+            request.url,
+            headers=request.headers,
+            microversion=version,
+            retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
+        )
+
+        msg = f"Failed to list BMC settings for node {self.id}"
+        exceptions.raise_from_response(response, error_message=msg)
+
+        return cast(list[dict[str, object]], response.json().get('bmc', []))
+
+    def get_bmc_setting(
+        self, session: adapter.Adapter, setting_name: str
+    ) -> dict[str, object]:
+        """Get a single BMC (management controller) setting for the node.
+
+        :param session: The session to use for making this request.
+        :param setting_name: The name of the BMC setting to retrieve.
+        :returns: The BMC setting as a dict.
+        """
+        session = self._get_session(session)
+        version = self._assert_microversion_for(
+            session,
+            _common.BMC_SETTINGS_VERSION,
+            error_message="Cannot use the node BMC settings API",
+        )
+
+        request = self._prepare_request(requires_id=True)
+        request.url = utils.urljoin(request.url, 'bmc', setting_name)
+
+        response = session.get(
+            request.url,
+            headers=request.headers,
+            microversion=version,
+            retriable_status_codes=_common.RETRIABLE_STATUS_CODES,
+        )
+
+        msg = (
+            f"Failed to get BMC setting {setting_name} for node {self.id}"
+        )
+        exceptions.raise_from_response(response, error_message=msg)
+
+        return cast(
+            dict[str, object], response.json().get(setting_name, {})
+        )
+
     def patch(
         self,
         session: adapter.Adapter,

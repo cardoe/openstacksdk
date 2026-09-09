@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Adds support for reading a bare metal node's BMC (management controller)
+    settings, available with ironic API microversion 1.116 or newer. The
+    baremetal proxy gains ``list_node_bmc_settings`` and
+    ``get_node_bmc_setting``, and the ``Node`` resource gains the matching
+    ``list_bmc_settings`` and ``get_bmc_setting`` methods. BMC settings mirror
+    BIOS settings but describe the configuration of the management controller
+    itself.
