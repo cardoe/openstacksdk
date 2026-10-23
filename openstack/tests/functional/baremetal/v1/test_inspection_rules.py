@@ -77,6 +77,9 @@ class TestBareMetalInspectionRule(base.BaseBaremetalTest):
         for rule in inspection_rules_with_details:
             self.assertIsNotNone(rule.id)
             self.assertIsNotNone(rule.description)
+            # actions and conditions are only returned in the detailed view
+            self.assertIsNotNone(rule.actions)
+            self.assertIsNotNone(rule.conditions)
 
         inspection_rule_with_fields = (
             self.system_admin_cloud.baremetal.inspection_rules(fields=['uuid'])

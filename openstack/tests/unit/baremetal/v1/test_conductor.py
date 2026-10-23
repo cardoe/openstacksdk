@@ -11,6 +11,9 @@
 # under the License.
 
 from typing import Any
+from unittest import mock
+
+from keystoneauth1 import adapter
 
 from openstack.baremetal.v1 import conductor
 from openstack.tests.unit import base
@@ -58,3 +61,34 @@ class TestContainer(base.TestCase):
         self.assertEqual(FAKE['alive'], sot.alive)
         self.assertEqual(FAKE['links'], sot.links)
         self.assertEqual(FAKE['drivers'], sot.drivers)
+
+
+class TestConductorList(base.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.session = mock.Mock(
+            spec=adapter.Adapter,
+            default_microversion=conductor.Conductor._max_microversion,
+        )
+        self.session.get.return_value.status_code = 200
+        self.session.get.return_value.json.return_value = {'conductors': []}
+
+    def test_list(self):
+        result = list(conductor.Conductor.list(self.session))
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/conductors',
+            headers={'Accept': 'application/json'},
+            params={},
+            microversion=conductor.Conductor._max_microversion,
+        )
+
+    def test_list_detail(self):
+        result = list(conductor.Conductor.list(self.session, detail=True))
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/conductors',
+            headers={'Accept': 'application/json'},
+            params={'detail': True},
+            microversion=conductor.Conductor._max_microversion,
+        )

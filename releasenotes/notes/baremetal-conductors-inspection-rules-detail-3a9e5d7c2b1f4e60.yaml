@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Fixed the ``details`` argument of the ``conductors`` and
+    ``inspection_rules`` methods of the baremetal proxy. Previously it was
+    sent as an unrecognised ``details`` query parameter, which was dropped,
+    so the detailed fields were never returned.
