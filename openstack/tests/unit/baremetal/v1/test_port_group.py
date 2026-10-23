@@ -11,6 +11,9 @@
 # under the License.
 
 from typing import Any
+from unittest import mock
+
+from keystoneauth1 import adapter
 
 from openstack.baremetal.v1 import port_group
 from openstack.tests.unit import base
@@ -28,6 +31,7 @@ FAKE: dict[str, Any] = {
             "rel": "bookmark",
         },
     ],
+    "mode": "active-backup",
     "name": "test_portgroup",
     "node_uuid": "6d85703a-565d-469a-96ce-30b6de53079d",
     "ports": [
@@ -40,6 +44,7 @@ FAKE: dict[str, Any] = {
             "rel": "bookmark",
         },
     ],
+    "properties": {"miimon": "100"},
     "standalone_ports_supported": True,
     "updated_at": None,
     "uuid": "e43c722c-248e-4c6e-8ce8-0d8ff129387a",
@@ -58,6 +63,16 @@ class TestPortGroup(base.TestCase):
         self.assertTrue(sot.allow_delete)
         self.assertTrue(sot.allow_list)
         self.assertEqual('PATCH', sot.commit_method)
+        self.assertDictEqual(
+            {
+                'address': 'address',
+                'fields': {'format': 'csv'},
+                'limit': 'limit',
+                'marker': 'marker',
+                'node': 'node',
+            },
+            sot._query_mapping._mapping,
+        )
 
     def test_instantiate(self):
         sot = port_group.PortGroup(**FAKE)
@@ -67,11 +82,60 @@ class TestPortGroup(base.TestCase):
         self.assertEqual(FAKE['extra'], sot.extra)
         self.assertEqual(FAKE['internal_info'], sot.internal_info)
         self.assertEqual(FAKE['links'], sot.links)
+        self.assertEqual(FAKE['mode'], sot.mode)
         self.assertEqual(FAKE['name'], sot.name)
         self.assertEqual(FAKE['node_uuid'], sot.node_id)
         self.assertEqual(FAKE['ports'], sot.ports)
+        self.assertEqual(FAKE['properties'], sot.properties)
         self.assertEqual(
             FAKE['standalone_ports_supported'],
             sot.is_standalone_ports_supported,
         )
         self.assertEqual(FAKE['updated_at'], sot.updated_at)
+
+
+class TestPortGroupList(base.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.session = mock.Mock(
+            spec=adapter.Adapter,
+            default_microversion=port_group.PortGroup._max_microversion,
+        )
+        self.session.get.return_value.status_code = 200
+        self.session.get.return_value.json.return_value = {'portgroups': []}
+
+    def test_list(self):
+        result = list(
+            port_group.PortGroup.list(
+                self.session, node='node-1', address=FAKE['address']
+            )
+        )
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/portgroups',
+            headers={'Accept': 'application/json'},
+            params={'node': 'node-1', 'address': FAKE['address']},
+            microversion=port_group.PortGroup._max_microversion,
+        )
+
+    def test_list_detailed(self):
+        result = list(port_group.PortGroup.list(self.session, details=True))
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/portgroups/detail',
+            headers={'Accept': 'application/json'},
+            params={},
+            microversion=port_group.PortGroup._max_microversion,
+        )
+
+    def test_list_fields(self):
+        result = list(
+            port_group.PortGroup.list(self.session, fields=['uuid', 'name'])
+        )
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/portgroups',
+            headers={'Accept': 'application/json'},
+            params={'fields': 'uuid,name'},
+            microversion=port_group.PortGroup._max_microversion,
+        )

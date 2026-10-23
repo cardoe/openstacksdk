@@ -11,6 +11,9 @@
 # under the License.
 
 from typing import Any
+from unittest import mock
+
+from keystoneauth1 import adapter
 
 from openstack.baremetal.v1 import inspection_rules
 from openstack.tests.unit import base
@@ -77,6 +80,15 @@ class InspectionRules(base.TestCase):
         self.assertTrue(sot.allow_delete)
         self.assertTrue(sot.allow_list)
         self.assertEqual('PATCH', sot.commit_method)
+        self.assertDictEqual(
+            {
+                'detail': 'detail',
+                'fields': {'format': 'csv'},
+                'limit': 'limit',
+                'marker': 'marker',
+            },
+            sot._query_mapping._mapping,
+        )
 
     def test_instantiate(self):
         sot = inspection_rules.InspectionRule(**FAKE)
@@ -90,3 +102,54 @@ class InspectionRules(base.TestCase):
         self.assertEqual(FAKE['sensitive'], sot.sensitive)
         self.assertEqual(FAKE['updated_at'], sot.updated_at)
         self.assertEqual(FAKE['uuid'], sot.id)
+
+
+class TestInspectionRulesList(base.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.session = mock.Mock(
+            spec=adapter.Adapter,
+            default_microversion=(
+                inspection_rules.InspectionRule._max_microversion
+            ),
+        )
+        self.session.get.return_value.status_code = 200
+        self.session.get.return_value.json.return_value = {
+            'inspection_rules': []
+        }
+
+    def test_list(self):
+        result = list(inspection_rules.InspectionRule.list(self.session))
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/inspection_rules',
+            headers={'Accept': 'application/json'},
+            params={},
+            microversion=inspection_rules.InspectionRule._max_microversion,
+        )
+
+    def test_list_detail(self):
+        result = list(
+            inspection_rules.InspectionRule.list(self.session, detail=True)
+        )
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/inspection_rules',
+            headers={'Accept': 'application/json'},
+            params={'detail': True},
+            microversion=inspection_rules.InspectionRule._max_microversion,
+        )
+
+    def test_list_fields(self):
+        result = list(
+            inspection_rules.InspectionRule.list(
+                self.session, fields=['uuid', 'priority']
+            )
+        )
+        self.assertEqual([], result)
+        self.session.get.assert_called_once_with(
+            '/inspection_rules',
+            headers={'Accept': 'application/json'},
+            params={'fields': 'uuid,priority'},
+            microversion=inspection_rules.InspectionRule._max_microversion,
+        )
