@@ -255,6 +255,8 @@ class TestNode(TestBaremetalProxy):
             wait=False,
             timeout=None,
             deploy_steps=None,
+            service_steps=None,
+            runbook=None,
         )
         self.assertEqual('uuid', mock_set.call_args[0][0].id)
 
@@ -279,6 +281,49 @@ class TestNode(TestBaremetalProxy):
             wait=True,
             timeout=42,
             deploy_steps=steps,
+            service_steps=None,
+            runbook=None,
+        )
+
+    @mock.patch.object(node.Node, 'set_provision_state', autospec=True)
+    def test_set_node_provision_state_service_steps(self, mock_set):
+        steps: list[dict[str, object]] = [
+            {'interface': 'bios', 'step': 'apply_configuration'}
+        ]
+        self.proxy.set_node_provision_state(
+            'uuid', 'service', service_steps=steps
+        )
+        mock_set.assert_called_once_with(
+            mock.ANY,
+            self.proxy,
+            'service',
+            config_drive=None,
+            clean_steps=None,
+            rescue_password=None,
+            wait=False,
+            timeout=None,
+            deploy_steps=None,
+            service_steps=steps,
+            runbook=None,
+        )
+
+    @mock.patch.object(node.Node, 'set_provision_state', autospec=True)
+    def test_set_node_provision_state_runbook(self, mock_set):
+        self.proxy.set_node_provision_state(
+            'uuid', 'clean', runbook='CUSTOM_RUNBOOK'
+        )
+        mock_set.assert_called_once_with(
+            mock.ANY,
+            self.proxy,
+            'clean',
+            config_drive=None,
+            clean_steps=None,
+            rescue_password=None,
+            wait=False,
+            timeout=None,
+            deploy_steps=None,
+            service_steps=None,
+            runbook='CUSTOM_RUNBOOK',
         )
 
     @mock.patch.object(node.Node, 'get_boot_device', autospec=True)

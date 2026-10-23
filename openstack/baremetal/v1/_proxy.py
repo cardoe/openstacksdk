@@ -536,6 +536,8 @@ class Proxy(proxy.Proxy):
         wait: bool = False,
         timeout: float | None = None,
         deploy_steps: list[dict[str, object]] | None = None,
+        service_steps: list[dict[str, object]] | None = None,
+        runbook: str | None = None,
     ) -> _node.Node:
         """Run an action modifying node's provision state.
 
@@ -561,11 +563,16 @@ class Proxy(proxy.Proxy):
             ``None`` (the default) means no client-side timeout.
         :param deploy_steps: Deploy steps to execute, only valid for ``active``
             and ``rebuild`` target.
+        :param service_steps: Service steps to execute, only valid for
+            ``service`` target.
+        :param runbook: UUID or logical name of a runbook to execute instead
+            of explicit steps, only valid for ``clean`` and ``service``
+            targets.
 
         :returns: The updated :class:`~openstack.baremetal.v1.node.Node`
         :raises: ValueError if ``config_drive``, ``clean_steps``,
-            ``deploy_steps`` or ``rescue_password`` are provided with an
-            invalid ``target``.
+            ``deploy_steps``, ``service_steps``, ``runbook`` or
+            ``rescue_password`` are provided with an invalid ``target``.
         """
         res = self._get_resource(_node.Node, node)
         return res.set_provision_state(
@@ -577,6 +584,8 @@ class Proxy(proxy.Proxy):
             wait=wait,
             timeout=timeout,
             deploy_steps=deploy_steps,
+            service_steps=service_steps,
+            runbook=runbook,
         )
 
     def get_node_boot_device(

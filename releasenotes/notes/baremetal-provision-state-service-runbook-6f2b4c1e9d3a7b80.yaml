@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The ``set_node_provision_state`` method of the baremetal proxy now
+    accepts the ``service_steps`` and ``runbook`` arguments and passes them
+    through to the node. Previously they were only available when calling
+    ``Node.set_provision_state`` directly.
