@@ -1214,6 +1214,8 @@ class Proxy(proxy.Proxy):
 
             * ``address``: Only return portgroups with the specified physical
               hardware address, typically a MAC address.
+            * ``conductor_groups``: Only return portgroups belonging to nodes
+              in one of the specified conductor groups.
             * ``fields``: A list containing one or more fields to be returned
               in the response. This may lead to some performance gain
               because other fields of the resource are not refreshed.
@@ -1225,6 +1227,8 @@ class Proxy(proxy.Proxy):
               the ``marker`` value in a subsequent limited request.
             * ``node``:only return the ones associated with this specific node
               (name or UUID), or an empty set if not found.
+            * ``shard``: Only return portgroups belonging to nodes in one of
+              the specified shards.
             * ``sort_dir``: Sorts the response by the requested sort direction.
               A valid value is ``asc`` (ascending) or ``desc``
               (descending). Default is ``asc``. You can specify multiple

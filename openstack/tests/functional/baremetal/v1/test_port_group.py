@@ -144,3 +144,50 @@ class TestBareMetalPortGroup(base.BaseBaremetalTest):
         for item in result:
             self.assertIsNotNone(item.id)
             self.assertIsNone(item.address)
+
+
+class TestBareMetalPortGroupDynamic(base.BaseBaremetalTest):
+    min_microversion = '1.111'
+
+    def setUp(self):
+        super().setUp()
+        self.node = self.create_node()
+
+    def test_port_group_physical_network_category(self):
+        port_group = self.create_port_group(
+            node_id=self.node.id,
+            physical_network='physnet1',
+            category='storage',
+        )
+        self.assertEqual('physnet1', port_group.physical_network)
+        self.assertEqual('storage', port_group.category)
+        self.assertFalse(port_group.is_dynamic)
+
+        port_group = self.operator_cloud.baremetal.update_port_group(
+            port_group, physical_network='physnet2', category='tenant'
+        )
+        self.assertEqual('physnet2', port_group.physical_network)
+        self.assertEqual('tenant', port_group.category)
+
+        loaded = self.operator_cloud.baremetal.get_port_group(port_group.id)
+        self.assertEqual('physnet2', loaded.physical_network)
+        self.assertEqual('tenant', loaded.category)
+
+    def test_port_group_list_by_shard(self):
+        other_node = self.create_node()
+        # Setting the shard requires system admin by default
+        self.system_admin_cloud.baremetal.update_node(
+            self.node.id, shard='shard-a'
+        )
+        self.system_admin_cloud.baremetal.update_node(
+            other_node.id, shard='shard-b'
+        )
+        pg1 = self.create_port_group(
+            node_id=self.node.id, address='11:22:33:44:55:66'
+        )
+        self.create_port_group(
+            node_id=other_node.id, address='11:22:33:44:55:77'
+        )
+
+        pgs = self.operator_cloud.baremetal.port_groups(shard='shard-a')
+        self.assertEqual([pg1.id], [p.id for p in pgs])

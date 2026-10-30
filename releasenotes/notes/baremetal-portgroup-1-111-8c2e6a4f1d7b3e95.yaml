@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The baremetal ``PortGroup`` resource now supports API microversion
+    1.111. It adds the ``physical_network`` (1.102) and ``category`` (1.103)
+    fields and the read-only ``is_dynamic`` field (``dynamic_portgroup`` in
+    the API, 1.111). The ``port_groups`` proxy method can now filter by
+    ``conductor_groups`` (1.99) and ``shard`` (1.106).

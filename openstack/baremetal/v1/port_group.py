@@ -28,17 +28,26 @@ class PortGroup(_common.Resource):
     commit_opts = resource.CommitOpts(method='PATCH')
 
     _query_mapping = resource.QueryParameters(
-        'node',
         'address',
+        'conductor_groups',
+        'node',
+        'shard',
         fields={'format': 'csv'},
     )
 
     # The mode and properties field introduced in 1.26.
-    _max_microversion = '1.26'
+    # Filter by conductor_groups added in 1.99
+    # The physical_network field added in 1.102
+    # The category field added in 1.103
+    # Filter by shard added in 1.106
+    # The dynamic_portgroup field added in 1.111
+    _max_microversion = '1.111'
 
     #: The physical hardware address of the portgroup, typically the hardware
     #: MAC address. Added in API microversion 1.23.
     address = resource.Body('address')
+    #: The category of the portgroup. Added in API microversion 1.103.
+    category = resource.Body('category')
     #: Timestamp at which the portgroup was created.
     created_at = resource.Body('created_at')
     #: A set of one or more arbitrary metadata key and value pairs.
@@ -49,6 +58,10 @@ class PortGroup(_common.Resource):
     id = resource.Body('uuid', alternate_id=True)
     #: Internal metadaa set and stored by the portgroup.
     internal_info = resource.Body('internal_info')
+    #: Whether the portgroup was created automatically by the Bare Metal
+    #: service when attaching a VIF, rather than by a user. Read-only.
+    #: Added in API microversion 1.111.
+    is_dynamic = resource.Body('dynamic_portgroup', type=bool)
     #: Whether ports that are members of this portgroup can be used as
     #: standalone ports. Added in API microversion 1.23.
     is_standalone_ports_supported = resource.Body(
@@ -60,6 +73,9 @@ class PortGroup(_common.Resource):
     mode = resource.Body('mode')
     #: UUID of the node this portgroup belongs to.
     node_id = resource.Body('node_uuid')
+    #: The name of the physical network this portgroup is attached to.
+    #: Added in API microversion 1.102.
+    physical_network = resource.Body('physical_network')
     #: A list of links to the collection of ports belonging to this portgroup.
     #: Added in API microversion 1.24.
     ports = resource.Body('ports')

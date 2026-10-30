@@ -18,7 +18,9 @@ from openstack.tests.unit import base
 
 FAKE: dict[str, Any] = {
     "address": "11:11:11:11:11:11",
+    "category": "storage",
     "created_at": "2016-08-18T22:28:48.165105+00:00",
+    "dynamic_portgroup": False,
     "extra": {},
     "internal_info": {},
     "links": [
@@ -41,6 +43,7 @@ FAKE: dict[str, Any] = {
             "rel": "bookmark",
         },
     ],
+    "physical_network": "physnet1",
     "properties": {"miimon": "100"},
     "standalone_ports_supported": True,
     "updated_at": None,
@@ -63,10 +66,12 @@ class TestPortGroup(base.TestCase):
         self.assertDictEqual(
             {
                 'address': 'address',
+                'conductor_groups': 'conductor_groups',
                 'fields': {'format': 'csv'},
                 'limit': 'limit',
                 'marker': 'marker',
                 'node': 'node',
+                'shard': 'shard',
             },
             sot._query_mapping._mapping,
         )
@@ -75,13 +80,16 @@ class TestPortGroup(base.TestCase):
         sot = port_group.PortGroup(**FAKE)
         self.assertEqual(FAKE['uuid'], sot.id)
         self.assertEqual(FAKE['address'], sot.address)
+        self.assertEqual(FAKE['category'], sot.category)
         self.assertEqual(FAKE['created_at'], sot.created_at)
         self.assertEqual(FAKE['extra'], sot.extra)
         self.assertEqual(FAKE['internal_info'], sot.internal_info)
+        self.assertEqual(FAKE['dynamic_portgroup'], sot.is_dynamic)
         self.assertEqual(FAKE['links'], sot.links)
         self.assertEqual(FAKE['mode'], sot.mode)
         self.assertEqual(FAKE['name'], sot.name)
         self.assertEqual(FAKE['node_uuid'], sot.node_id)
+        self.assertEqual(FAKE['physical_network'], sot.physical_network)
         self.assertEqual(FAKE['ports'], sot.ports)
         self.assertEqual(FAKE['properties'], sot.properties)
         self.assertEqual(
