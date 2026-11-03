@@ -21,6 +21,7 @@ from openstack.tests.unit import base
 
 FAKE: dict[str, Any] = {
     "address": "11:11:11:11:11:11",
+    "available_for_dynamic_portgroup": False,
     "created_at": "2016-08-18T22:28:49.946416+00:00",
     "description": "Physical network",
     "extra": {},
@@ -56,11 +57,30 @@ class TestPort(base.TestCase):
         self.assertTrue(sot.allow_delete)
         self.assertTrue(sot.allow_list)
         self.assertEqual('PATCH', sot.commit_opts.method)
+        self.assertDictEqual(
+            {
+                'address': 'address',
+                'conductor_groups': 'conductor_groups',
+                'description_contains': 'description_contains',
+                'fields': {'format': 'csv'},
+                'limit': 'limit',
+                'marker': 'marker',
+                'node': 'node',
+                'node_id': 'node_uuid',
+                'portgroup': 'portgroup',
+                'shard': 'shard',
+            },
+            sot._query_mapping._mapping,
+        )
 
     def test_instantiate(self):
         sot = port.PortDetail(**FAKE)
         self.assertEqual(FAKE['uuid'], sot.id)
         self.assertEqual(FAKE['address'], sot.address)
+        self.assertEqual(
+            FAKE['available_for_dynamic_portgroup'],
+            sot.is_available_for_dynamic_portgroup,
+        )
         self.assertEqual(FAKE['created_at'], sot.created_at)
         self.assertEqual(FAKE['extra'], sot.extra)
         self.assertEqual(FAKE['internal_info'], sot.internal_info)

@@ -149,3 +149,42 @@ class TestBareMetalPortFields(base.BaseBaremetalTest):
         for item in result:
             self.assertIsNotNone(item.id)
             self.assertIsNone(item.address)
+
+
+class TestBareMetalPortDynamicPortgroup(base.BaseBaremetalTest):
+    min_microversion = '1.111'
+
+    def setUp(self):
+        super().setUp()
+        self.node = self.create_node()
+
+    def test_port_available_for_dynamic_portgroup(self):
+        port = self.create_port(
+            node_id=self.node.id,
+            address='11:22:33:44:55:66',
+            is_available_for_dynamic_portgroup=False,
+        )
+        self.assertFalse(port.is_available_for_dynamic_portgroup)
+
+        port = self.operator_cloud.baremetal.update_port(
+            port, is_available_for_dynamic_portgroup=True
+        )
+        self.assertTrue(port.is_available_for_dynamic_portgroup)
+
+        loaded = self.operator_cloud.baremetal.get_port(port.id)
+        self.assertTrue(loaded.is_available_for_dynamic_portgroup)
+
+    def test_port_list_description_contains(self):
+        port1 = self.create_port(
+            node_id=self.node.id,
+            address='11:22:33:44:55:66',
+            description='uplink to the red switch',
+        )
+        self.create_port(
+            node_id=self.node.id,
+            address='11:22:33:44:55:77',
+            description='uplink to the blue switch',
+        )
+
+        ports = self.operator_cloud.baremetal.ports(description_contains='red')
+        self.assertEqual([port1.id], [p.id for p in ports])

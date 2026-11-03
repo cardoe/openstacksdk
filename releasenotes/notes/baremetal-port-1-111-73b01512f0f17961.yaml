@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The baremetal ``Port`` resource now supports API microversion 1.111. It
+    adds the ``is_available_for_dynamic_portgroup`` field
+    (``available_for_dynamic_portgroup`` in the API, 1.111). The ``ports``
+    proxy method can now filter by ``description_contains``, and its
+    ``shard`` filter (1.82) is now documented.

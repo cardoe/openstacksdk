@@ -30,6 +30,7 @@ class Port(_common.Resource):
     _query_mapping = resource.QueryParameters(
         'address',
         'conductor_groups',
+        'description_contains',
         'node',
         'portgroup',
         'shard',
@@ -42,10 +43,12 @@ class Port(_common.Resource):
     # Query filter by shard added in 1.82
     # The name field added in 1.88
     # The description field added in 1.97
+    # Filter by description_contains is not gated by a microversion
     # Filter by conductor_groups added in 1.99
     # The vendor field added in 1.100
     # The category field added in 1.101
-    _max_microversion = '1.101'
+    # The available_for_dynamic_portgroup field added in 1.111
+    _max_microversion = '1.111'
 
     #: The physical hardware address of the network port, typically the
     #: hardware MAC address.
@@ -63,6 +66,11 @@ class Port(_common.Resource):
     #: Internal metadata set and stored by the port. This field is read-only.
     #: Added in API microversion 1.18.
     internal_info = resource.Body('internal_info')
+    #: Whether the port can be used by the Bare Metal service for dynamic
+    #: portgroups. Added in API microversion 1.111.
+    is_available_for_dynamic_portgroup = resource.Body(
+        'available_for_dynamic_portgroup', type=bool
+    )
     #: Whether PXE is enabled on the port. Added in API microversion 1.19.
     is_pxe_enabled = resource.Body('pxe_enabled', type=bool)
     #: Whether the port is a Smart NIC port. Added in API microversion 1.53.

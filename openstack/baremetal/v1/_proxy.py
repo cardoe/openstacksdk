@@ -1042,6 +1042,8 @@ class Proxy(proxy.Proxy):
               hardware address, typically a MAC address.
             * ``conductor_groups``: Only return ports associated with nodes
               in the specified conductor group(s).
+            * ``description_contains``: Only return ports whose description
+              contains the specified substring.
             * ``driver``: Only return those with the specified ``driver``.
             * ``fields``: A list containing one or more fields to be returned
               in the response. This may lead to some performance gain
@@ -1059,6 +1061,8 @@ class Proxy(proxy.Proxy):
             * ``portgroup``: only return the ports associated with this
               specific Portgroup (name or UUID), or an empty set if not
               found.  Added in API microversion 1.24.
+            * ``shard``: Only return ports belonging to nodes in one of the
+              specified shards. Added in API microversion 1.82.
             * ``sort_dir``: Sorts the response by the requested sort direction.
               A valid value is ``asc`` (ascending) or ``desc``
               (descending). Default is ``asc``. You can specify multiple
